@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getOrders, updateOrderStatus } from '../../../lib/orders-db';
+import { getOrders, updateOrderStatus, deleteOrder } from '../../../lib/orders-db';
 
 // Barcha buyurtmalarni olish
 export async function GET() {
@@ -43,3 +43,54 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+// Buyurtmani o'chirish
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'Buyurtma ID si talab qilinadi' },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await deleteOrder(id);
+    return NextResponse.json({ success: deleted });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error.message || 'Xatolik yuz berdi' },
+      { status: 500 }
+    );
+  }
+}
+
+// Telegram botga test yoki xabar yuborish
+export async function POST(req: Request) {
+  try {
+    const { message } = await req.json();
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || '8870844089:AAHNrSgJGo8nMxGRdLtNo2tUvPFXlHNXn6U';
+    const chatId = process.env.TELEGRAM_CHAT_ID || '7833585964';
+
+    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message || '🔔 Xamsiya MARKET: Admin paneldan sinov signali!',
+        parse_mode: 'HTML'
+      })
+    });
+
+    const data = await tgRes.json();
+    return NextResponse.json({ success: data.ok, result: data });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error.message || 'Telegramga yuborishda xatolik' },
+      { status: 500 }
+    );
+  }
+}
+

@@ -142,3 +142,24 @@ export async function updateOrderStatus(
 
   return orders[index];
 }
+
+export async function deleteOrder(id: string): Promise<boolean> {
+  const filePath = getOrdersFilePath();
+  const orders = await getOrders();
+  const index = orders.findIndex((o) => o.id.toLowerCase() === id.toLowerCase());
+
+  if (index === -1) return false;
+
+  orders.splice(index, 1);
+  inMemoryOrders = orders;
+
+  try {
+    ensureFileExists(filePath);
+    await fs.promises.writeFile(filePath, JSON.stringify(orders, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('deleteOrder filesystem write warning:', err);
+  }
+
+  return true;
+}
+
