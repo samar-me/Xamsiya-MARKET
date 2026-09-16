@@ -30,11 +30,18 @@ export interface Order {
 
 // Serverless (Vercel) va mahalliy muhit uchun xavfsiz fayl yo'li
 function getOrdersFilePath(): string {
-  // Vercel serverless muhitida faqat /tmp papkasiga yozish mumkin
   if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
     return path.join(os.tmpdir(), 'xamsiya_orders.json');
   }
-  return path.join(process.cwd(), 'data', 'orders.json');
+  try {
+    const dataDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    return path.join(dataDir, 'orders.json');
+  } catch {
+    return path.join(os.tmpdir(), 'xamsiya_orders.json');
+  }
 }
 
 // Serverless jarayonida hot-cache uchun in-memory xotira

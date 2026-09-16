@@ -1,1 +1,301 @@
-[]
+[
+  {
+    "id": "ORD-7732",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Ko'rsatilmadi",
+    "items": [
+      {
+        "id": 202,
+        "name": "iPhone 13/14/15/16 Shaffof Ultra-Slim Sariq Bo‘lmaydigan Chexol",
+        "category": "Chexol",
+        "price": 65000,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1586105251261-72a756497a11?auto=format&fit=crop&w=600&q=80",
+        "selectedColor": "Qora (Black)",
+        "selectedModel": "iPhone 14 Pro"
+      }
+    ],
+    "totalPrice": 65000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:45:35.674Z"
+  },
+  {
+    "id": "ORD-1330",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Bajarildi",
+    "createdAt": "2026-09-16T13:28:38.096Z",
+    "updatedAt": "2026-09-16T13:30:36.714Z"
+  },
+  {
+    "id": "ORD-4622",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yetkazilmoqda",
+    "createdAt": "2026-09-16T13:28:59.151Z",
+    "updatedAt": "2026-09-16T13:30:40.912Z"
+  },
+  {
+    "id": "ORD-7420",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Bekor qilindi",
+    "createdAt": "2026-09-16T13:28:57.654Z",
+    "updatedAt": "2026-09-16T13:30:45.298Z"
+  },
+  {
+    "id": "ORD-6720",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:49.503Z"
+  },
+  {
+    "id": "ORD-5378",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:48.974Z"
+  },
+  {
+    "id": "ORD-9231",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:48.476Z"
+  },
+  {
+    "id": "ORD-2366",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:46.952Z"
+  },
+  {
+    "id": "ORD-9874",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:38.816Z"
+  },
+  {
+    "id": "ORD-8355",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Bajarildi",
+    "createdAt": "2026-09-16T13:28:38.328Z",
+    "updatedAt": "2026-09-16T13:46:30.929Z"
+  },
+  {
+    "id": "ORD-9986",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:37.906Z"
+  },
+  {
+    "id": "ORD-2257",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:36.773Z"
+  },
+  {
+    "id": "ORD-6642",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:34.199Z"
+  },
+  {
+    "id": "ORD-8940",
+    "customerName": "Samar Baxtiyarov",
+    "customerPhone": "200191809",
+    "customerAddress": "Yakkabog istansa",
+    "comment": "qora bolsin",
+    "items": [
+      {
+        "id": 6,
+        "name": "9D Full Glue Max Shisha Himoya Oynasi",
+        "category": "Himoya",
+        "price": 45000,
+        "quantity": 20,
+        "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80"
+      }
+    ],
+    "totalPrice": 900000,
+    "discountApplied": 0,
+    "status": "Yangi",
+    "createdAt": "2026-09-16T13:28:44.941Z"
+  }
+]

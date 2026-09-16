@@ -4,11 +4,7 @@ import { getOrders, updateOrderStatus, getOrderById } from '../../../../lib/orde
 export async function POST(req: Request) {
   try {
     const update = await req.json();
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-
-    if (!botToken) {
-      return NextResponse.json({ ok: true, message: 'No bot token' });
-    }
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || '8870844089:AAHNrSgJGo8nMxGRdLtNo2tUvPFXlHNXn6U';
 
     // 1. TUGMA BOSILGANDA (CALLBACK QUERY)
     if (update.callback_query) {

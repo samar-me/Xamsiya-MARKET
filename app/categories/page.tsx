@@ -144,14 +144,22 @@ function CategoriesContent() {
   const [telegramStatus, setTelegramStatus] = useState<string>('');
   const [lastOrderId, setLastOrderId] = useState<string>('');
 
-  // Serverdan buyurtmalarni yuklash
+  // Serverdan buyurtmalarni yuklash (Mahalliy buyurtmalarni o'chirmasdan birlashtirish)
   const fetchServerOrders = async () => {
     try {
       const res = await fetch('/api/orders');
       const data = await res.json();
       if (data.success && Array.isArray(data.orders)) {
-        setAllOrders(data.orders);
-        localStorage.setItem('xamsiya_orders', JSON.stringify(data.orders));
+        setAllOrders((prev) => {
+          const map = new Map<string, Order>();
+          prev.forEach((o) => map.set(o.id.toLowerCase(), o));
+          data.orders.forEach((o: Order) => map.set(o.id.toLowerCase(), o));
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem('xamsiya_orders', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -199,11 +207,15 @@ function CategoriesContent() {
   }, [cart, mounted]);
 
   const myOrders = useMemo(() => {
-    if (!user) return [];
+    if (!user) return allOrders;
     const cleanUserPhone = user.phone.replace(/\D/g, '');
+    const userLast9 = cleanUserPhone.slice(-9);
     return allOrders.filter((ord) => {
       const cleanOrdPhone = ord.customerPhone.replace(/\D/g, '');
-      return cleanOrdPhone === cleanUserPhone || ord.customerName.toLowerCase() === user.name.toLowerCase();
+      const ordLast9 = cleanOrdPhone.slice(-9);
+      const phoneMatch = Boolean(userLast9 && ordLast9 && userLast9 === ordLast9);
+      const nameMatch = Boolean(user.name && ord.customerName.toLowerCase().trim() === user.name.toLowerCase().trim());
+      return phoneMatch || nameMatch;
     });
   }, [allOrders, user]);
 
