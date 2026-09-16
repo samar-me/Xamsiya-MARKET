@@ -371,9 +371,9 @@ function CategoriesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 selection:bg-neutral-950 selection:text-white font-sans antialiased w-full max-w-full overflow-x-hidden pb-20 sm:pb-12">
+    <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 selection:bg-neutral-950 selection:text-white font-sans antialiased w-full max-w-full overflow-x-clip pb-20 sm:pb-12">
       {/* 1. HEADER */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/70 transition-all w-full">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/70 shadow-xs transition-all w-full">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           <a href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl overflow-hidden border border-neutral-200/90 bg-white p-0.5 sm:p-1 shadow-sm group-hover:scale-105 transition-transform duration-300 flex items-center justify-center shrink-0">

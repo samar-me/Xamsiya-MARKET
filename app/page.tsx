@@ -688,7 +688,7 @@ export default function XamsiyaMarketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 selection:bg-neutral-950 selection:text-white font-sans antialiased w-full max-w-full overflow-x-hidden pb-20 sm:pb-10">
+    <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 selection:bg-neutral-950 selection:text-white font-sans antialiased w-full max-w-full overflow-x-clip pb-20 sm:pb-10">
       {/* 7 000 CHEXOLLAR MEGA LIKVIDATSIYASI E'LONI */}
       <div className="bg-neutral-950 text-white text-[11px] sm:text-xs py-2 px-3 text-center font-medium border-b border-neutral-800">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 flex-wrap">
@@ -706,7 +706,7 @@ export default function XamsiyaMarketPage() {
       </div>
 
       {/* 1. HEADER (YUQORI QISM) */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/70 transition-all w-full">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/70 shadow-xs transition-all w-full">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
