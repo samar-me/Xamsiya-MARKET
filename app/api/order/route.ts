@@ -47,6 +47,16 @@ export async function POST(req: Request) {
     }
 
     // Narxni chiroyli formatlash
+    // Xavfsiz HTML formatlash (Telegram API <, >, & belgilarida 400 bermasligi uchun)
+    const escapeHtml = (str?: string): string => {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    };
+
     const formatPrice = (price: number) => {
       return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + " so'm";
     };
@@ -73,9 +83,9 @@ export async function POST(req: Request) {
     const itemsListText = items
       .map((item, index) => {
         let details = '';
-        if (item.selectedModel) details += `\n     📱 Model: <b>${item.selectedModel}</b>`;
-        if (item.selectedColor) details += `\n     🎨 Rang: <b>${item.selectedColor}</b>`;
-        return `  ${index + 1}. <b>${item.name}</b>${details}\n     └ ${item.quantity} dona × ${formatPrice(item.price)} = <b>${formatPrice(item.price * item.quantity)}</b>`;
+        if (item.selectedModel) details += `\n     📱 Model: <b>${escapeHtml(item.selectedModel)}</b>`;
+        if (item.selectedColor) details += `\n     🎨 Rang: <b>${escapeHtml(item.selectedColor)}</b>`;
+        return `  ${index + 1}. <b>${escapeHtml(item.name)}</b>${details}\n     └ ${item.quantity} dona × ${formatPrice(item.price)} = <b>${formatPrice(item.price * item.quantity)}</b>`;
       })
       .join('\n\n');
 
@@ -87,12 +97,12 @@ export async function POST(req: Request) {
       : '';
 
     const messageText = `
-🛍 <b>YANGI BUYURTMA: #${id}</b>
+🛍 <b>YANGI BUYURTMA: #${escapeHtml(id)}</b>
 ━━━━━━━━━━━━━━━━━━━━━
-👤 <b>Mijoz:</b> ${customerName}
+👤 <b>Mijoz:</b> ${escapeHtml(customerName)}
 📞 <b>Telefon:</b> <a href="tel:${phoneDisplay}">${phoneDisplay}</a>
-📍 <b>Manzil:</b> ${newOrder.customerAddress}
-${comment ? `💬 <b>Izoh:</b> ${comment}\n` : ''}
+📍 <b>Manzil:</b> ${escapeHtml(newOrder.customerAddress)}
+${comment ? `💬 <b>Izoh:</b> ${escapeHtml(comment)}\n` : ''}
 📦 <b>Buyurtma tarkibi:</b>
 ${itemsListText}
 ${discountText}

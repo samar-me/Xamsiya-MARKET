@@ -709,7 +709,7 @@ export default function XamsiyaMarketPage() {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/70 shadow-xs transition-all w-full">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
+          <a href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 shrink">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl overflow-hidden border border-neutral-200/90 bg-white p-0.5 sm:p-1 shadow-sm group-hover:scale-105 transition-transform duration-300 flex items-center justify-center shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="Xamsiya Market Logotipi" className="w-full h-full object-contain drop-shadow-xs" />

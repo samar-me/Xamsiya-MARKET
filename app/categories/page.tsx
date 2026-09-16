@@ -25,18 +25,30 @@ import {
   Sparkles,
   Check,
   Flame,
-  ArrowUpDown
+  ArrowUpDown,
+  Zap,
+  Smartphone,
+  Palette,
+  Clock,
+  MapPin,
+  RefreshCw,
+  Truck,
+  ShieldCheck
 } from 'lucide-react';
 import {
   Product,
   PRODUCTS,
   CATEGORIES,
   CATEGORY_DETAILS,
+  CASE_COLORS,
+  PHONE_BRANDS,
   formatPrice
 } from '../../lib/products';
 
 interface CartItem extends Product {
   quantity: number;
+  selectedColor?: string;
+  selectedModel?: string;
 }
 
 interface Order {
@@ -44,10 +56,13 @@ interface Order {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  comment?: string;
   items: CartItem[];
   totalPrice: number;
+  discountApplied?: number;
   status: 'Yangi' | 'Yetkazilmoqda' | 'Bajarildi' | 'Bekor qilindi';
   createdAt: string;
+  telegramMessageId?: number;
 }
 
 interface UserProfile {
@@ -118,6 +133,37 @@ function CategoriesContent() {
   // Buyurtmalar
   const [allOrders, setAllOrders] = useState<Order[]>([]);
 
+  // 1-bosishda tezkor xarid
+  const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
+  const [quickColor, setQuickColor] = useState<string>('');
+  const [quickModel, setQuickModel] = useState<string>('');
+  const [quickName, setQuickName] = useState<string>('');
+  const [quickPhone, setQuickPhone] = useState<string>('');
+  const [quickAddress, setQuickAddress] = useState<string>('');
+  const [isQuickSubmitting, setIsQuickSubmitting] = useState<boolean>(false);
+  const [telegramStatus, setTelegramStatus] = useState<string>('');
+  const [lastOrderId, setLastOrderId] = useState<string>('');
+
+  // Serverdan buyurtmalarni yuklash
+  const fetchServerOrders = async () => {
+    try {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        setAllOrders(data.orders);
+        localStorage.setItem('xamsiya_orders', JSON.stringify(data.orders));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchServerOrders();
+    const interval = setInterval(fetchServerOrders, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     setMounted(true);
 
@@ -161,16 +207,33 @@ function CategoriesContent() {
     });
   }, [allOrders, user]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, chosenColor?: string, chosenModel?: string) => {
+    const itemColor = chosenColor || (product.category === 'Chexol' ? 'Qora (Black)' : undefined);
+    const itemModel = chosenModel || (product.compatibleModels?.[0] || (product.category === 'Chexol' ? 'iPhone 14 Pro' : undefined));
+
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
+      const existing = prev.find(
+        (item) =>
+          item.id === product.id &&
+          item.selectedColor === itemColor &&
+          item.selectedModel === itemModel
+      );
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item === existing ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [
+        ...prev,
+        {
+          ...product,
+          quantity: 1,
+          selectedColor: itemColor,
+          selectedModel: itemModel
+        }
+      ];
     });
+    setIsCartOpen(true);
   };
 
   const updateQuantity = (id: number, delta: number) => {
@@ -191,8 +254,154 @@ function CategoriesContent() {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // 🔥 2+1 AKSIYA AVTOMATIK HISOB-KITOBI (Har 3 ta chexoldan 1 tasi 100% BEPUL / 0 so'm)
+  const caseCartItems = useMemo(() => {
+    return cart.filter((item) => item.category === 'Chexol');
+  }, [cart]);
+
+  const totalCaseQuantity = useMemo(() => {
+    return caseCartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [caseCartItems]);
+
+  const freeCasesCount = Math.floor(totalCaseQuantity / 3);
+
+  const freeCasesDiscount = useMemo(() => {
+    if (freeCasesCount <= 0) return 0;
+    const individualPrices: number[] = [];
+    caseCartItems.forEach((item) => {
+      for (let i = 0; i < item.quantity; i++) {
+        individualPrices.push(item.price);
+      }
+    });
+    individualPrices.sort((a, b) => a - b);
+    return individualPrices.slice(0, freeCasesCount).reduce((acc, p) => acc + p, 0);
+  }, [caseCartItems, freeCasesCount]);
+
+  const rawCartPrice = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cart]);
+
+  const totalCartPrice = Math.max(0, rawCartPrice - freeCasesDiscount);
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalCartPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // ⚡ 1-BOSISHDA TEZKOR XARID OCHISH
+  const openQuickBuy = (product: Product) => {
+    const chosenColor = product.category === 'Chexol' ? 'Qora (Black)' : '';
+    const chosenModel = product.compatibleModels?.[0] || (product.category === 'Chexol' ? 'iPhone 14 Pro' : '');
+
+    setQuickBuyProduct(product);
+    setQuickColor(chosenColor);
+    setQuickModel(chosenModel);
+    if (user) {
+      setQuickName(user.name);
+      setQuickPhone(user.phone);
+      setQuickAddress(user.address || '');
+    }
+  };
+
+  // ⚡ 1-BOSISHDA TEZKOR BUYURTMA YUBORISH
+  const handleQuickBuySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickBuyProduct) return;
+
+    if (!quickName.trim() || !quickPhone.trim()) {
+      alert("Iltimos, ismingiz va telefon raqamingizni kiriting!");
+      return;
+    }
+
+    setIsQuickSubmitting(true);
+    const orderId = 'TEZ-' + Math.floor(1000 + Math.random() * 9000);
+
+    const quickItem: CartItem = {
+      ...quickBuyProduct,
+      quantity: 1,
+      selectedColor: quickColor || undefined,
+      selectedModel: quickModel || undefined,
+    };
+
+    const newOrder: Order = {
+      id: orderId,
+      customerName: quickName.trim(),
+      customerPhone: quickPhone.trim(),
+      customerAddress: quickAddress.trim() || "Yakkabog' tumani (Do'kondan olib ketish)",
+      comment: '[1 BOSISHDA TEZKOR XARID]',
+      items: [quickItem],
+      totalPrice: quickBuyProduct.price,
+      discountApplied: 0,
+      status: 'Yangi',
+      createdAt: new Date().toLocaleDateString('uz-UZ', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+
+    if (!user) {
+      const autoUser: UserProfile = {
+        name: quickName.trim(),
+        phone: quickPhone.trim(),
+        address: quickAddress.trim(),
+      };
+      setUser(autoUser);
+      localStorage.setItem('xamsiya_user', JSON.stringify(autoUser));
+    }
+
+    try {
+      const updatedOrders = [newOrder, ...allOrders];
+      setAllOrders(updatedOrders);
+      localStorage.setItem('xamsiya_orders', JSON.stringify(updatedOrders));
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      const response = await fetch('/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: orderId,
+          customerName: quickName.trim(),
+          customerPhone: quickPhone.trim(),
+          customerAddress: quickAddress.trim() || "Yakkabog' tumani (Do'kondan olib ketish)",
+          comment: '⚡ 1-Bosishda Tezkor Xarid',
+          items: [
+            {
+              id: quickBuyProduct.id,
+              name: quickBuyProduct.name,
+              category: quickBuyProduct.category,
+              price: quickBuyProduct.price,
+              quantity: 1,
+              image: quickBuyProduct.image,
+              selectedColor: quickColor || undefined,
+              selectedModel: quickModel || undefined,
+            },
+          ],
+          totalPrice: quickBuyProduct.price,
+          discountApplied: 0,
+        }),
+      });
+
+      const data = await response.json();
+      setLastOrderId(orderId);
+      setCustomerName(quickName);
+      setIsQuickSubmitting(false);
+      setQuickBuyProduct(null);
+      setOrderSuccess(true);
+
+      if (data.telegramSent) {
+        setTelegramStatus("Tezkor buyurtma do'kon egasining Telegram botiga yuborildi!");
+      } else {
+        setTelegramStatus("Tezkor buyurtma qabul qilindi va profilingizga qo‘shildi.");
+      }
+    } catch (err) {
+      console.error(err);
+      setIsQuickSubmitting(false);
+      setQuickBuyProduct(null);
+      setOrderSuccess(true);
+      setTelegramStatus("Tezkor buyurtma qabul qilindi.");
+    }
+  };
 
   // Filtrlash va saralash
   const filteredProducts = useMemo(() => {
@@ -311,16 +520,23 @@ function CategoriesContent() {
       alert("Savatchangiz bo'sh!");
       return;
     }
-    setIsSubmitting(true);
+    const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
     const newOrder: Order = {
-      id: 'XM-' + Math.floor(100000 + Math.random() * 900000),
+      id: orderId,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       customerAddress: customerAddress.trim() || "Yakkabog' tumani (Do'kondan olib ketish)",
+      comment: orderComment.trim() || undefined,
       items: [...cart],
       totalPrice: totalCartPrice,
+      discountApplied: freeCasesDiscount,
       status: 'Yangi',
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toLocaleDateString('uz-UZ', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     };
 
     try {
@@ -328,8 +544,23 @@ function CategoriesContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...newOrder,
-          comment: orderComment.trim()
+          id: orderId,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerAddress: customerAddress.trim() || "Yakkabog' tumani (Do'kondan olib ketish)",
+          comment: orderComment.trim() || undefined,
+          items: cart.map((i) => ({
+            id: i.id,
+            name: i.name,
+            category: i.category,
+            price: i.price,
+            quantity: i.quantity,
+            image: i.image,
+            selectedColor: i.selectedColor,
+            selectedModel: i.selectedModel,
+          })),
+          totalPrice: totalCartPrice,
+          discountApplied: freeCasesDiscount,
         }),
       });
       const data = await res.json();
@@ -350,6 +581,7 @@ function CategoriesContent() {
       }
 
       setCart([]);
+      setLastOrderId(orderId);
       setIsCheckoutOpen(false);
       setOrderSuccess(true);
     } catch (err: any) {
@@ -683,7 +915,10 @@ function CategoriesContent() {
                   key={product.id}
                   className="group bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/80 p-2.5 sm:p-4 flex flex-col justify-between hover:shadow-xl hover:border-neutral-300 transition-all duration-300"
                 >
-                  <div className="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden bg-neutral-100 mb-3 sm:mb-4">
+                  <div
+                    onClick={() => openQuickBuy(product)}
+                    className="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden bg-neutral-100 mb-3 sm:mb-4 cursor-pointer"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={product.image}
@@ -720,7 +955,10 @@ function CategoriesContent() {
                         </span>
                       </div>
 
-                      <h3 className="font-bold text-xs sm:text-sm text-neutral-900 leading-snug line-clamp-2 group-hover:text-neutral-700 transition-colors">
+                      <h3
+                        onClick={() => openQuickBuy(product)}
+                        className="font-bold text-xs sm:text-sm text-neutral-900 leading-snug line-clamp-2 group-hover:text-neutral-700 transition-colors cursor-pointer"
+                      >
                         {product.name}
                       </h3>
                       <p className="text-[11px] text-neutral-400 mt-1 line-clamp-2 hidden sm:block">
@@ -740,33 +978,45 @@ function CategoriesContent() {
                         </span>
                       </div>
 
-                      {inCart ? (
-                        <div className="flex items-center gap-1 bg-neutral-100 rounded-xl p-1 shrink-0">
-                          <button
-                            onClick={() => updateQuantity(product.id, -1)}
-                            className="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-neutral-700 hover:bg-neutral-200 active:scale-95 text-xs font-bold"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-5 text-center text-xs font-bold text-neutral-900">
-                            {inCart.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(product.id, 1)}
-                            className="w-6 h-6 rounded-lg bg-neutral-950 text-white flex items-center justify-center hover:bg-neutral-800 active:scale-95 text-xs font-bold"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ) : (
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
-                          onClick={() => addToCart(product)}
-                          className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-neutral-950 text-white hover:bg-neutral-800 text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 shrink-0"
+                          type="button"
+                          onClick={() => openQuickBuy(product)}
+                          className="px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-950 text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95"
+                          title="1-bosishda tezkor xarid"
                         >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Savatga</span>
+                          <Zap className="w-3 h-3 text-amber-600 fill-amber-500" />
+                          <span className="hidden sm:inline">Tezkor</span>
                         </button>
-                      )}
+
+                        {inCart ? (
+                          <div className="flex items-center gap-1 bg-neutral-100 rounded-xl p-1 shrink-0">
+                            <button
+                              onClick={() => updateQuantity(product.id, -1)}
+                              className="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-neutral-700 hover:bg-neutral-200 active:scale-95 text-xs font-bold"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="w-5 text-center text-xs font-bold text-neutral-900">
+                              {inCart.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(product.id, 1)}
+                              className="w-6 h-6 rounded-lg bg-neutral-950 text-white flex items-center justify-center hover:bg-neutral-800 active:scale-95 text-xs font-bold"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => addToCart(product)}
+                            className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-neutral-950 text-white hover:bg-neutral-800 text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 shrink-0"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Savatga</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -819,8 +1069,8 @@ function CategoriesContent() {
                     </button>
                   </div>
                 ) : (
-                  cart.map((item) => (
-                    <div key={item.id} className="py-4 flex gap-3 sm:gap-4 items-center">
+                  cart.map((item, index) => (
+                    <div key={`${item.id}-${item.selectedColor || ''}-${item.selectedModel || ''}-${index}`} className="py-4 flex gap-3 sm:gap-4 items-center">
                       <div className="w-16 h-16 rounded-xl bg-neutral-100 overflow-hidden shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -829,6 +1079,20 @@ function CategoriesContent() {
                         <h4 className="text-xs sm:text-sm font-semibold text-neutral-900 truncate">
                           {item.name}
                         </h4>
+                        {(item.selectedModel || item.selectedColor) && (
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            {item.selectedModel && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700 font-bold">
+                                {item.selectedModel}
+                              </span>
+                            )}
+                            {item.selectedColor && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700 font-medium">
+                                {item.selectedColor}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <p className="text-xs font-bold text-neutral-950 mt-1">
                           {formatPrice(item.price)}
                         </p>
@@ -872,6 +1136,15 @@ function CategoriesContent() {
                       <span>Yetkazib berish (Yakkabog‘)</span>
                       <span className="font-semibold text-emerald-600">Bepul</span>
                     </div>
+                    {freeCasesDiscount > 0 && (
+                      <div className="flex justify-between text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-100">
+                        <span className="flex items-center gap-1">
+                          <Flame className="w-3.5 h-3.5 fill-rose-600" />
+                          2+1 Aksiya ({freeCasesCount} ta bepul):
+                        </span>
+                        <span>-{formatPrice(freeCasesDiscount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-extrabold text-neutral-950 pt-2 border-t border-neutral-200">
                       <span>Jami to‘lov:</span>
                       <span>{formatPrice(totalCartPrice)}</span>
@@ -969,6 +1242,16 @@ function CategoriesContent() {
                 />
               </div>
 
+              {freeCasesDiscount > 0 && (
+                <div className="flex justify-between text-xs text-rose-600 font-bold bg-rose-50 p-2.5 rounded-xl border border-rose-100">
+                  <span className="flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 fill-rose-600" />
+                    2+1 Aksiya chegirmasi:
+                  </span>
+                  <span>-{formatPrice(freeCasesDiscount)}</span>
+                </div>
+              )}
+
               <div className="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-100 flex items-center justify-between text-xs">
                 <span className="font-medium text-neutral-500">Jami ({totalCartCount} ta tovar):</span>
                 <span className="font-extrabold text-neutral-950 text-sm">
@@ -1006,7 +1289,17 @@ function CategoriesContent() {
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h3 className="text-xl font-black text-neutral-950">Rahmat! Buyurtmangiz qabul qilindi</h3>
-            <p className="text-xs text-neutral-500 mt-2 leading-relaxed">
+            {lastOrderId && (
+              <div className="my-2 inline-block px-3 py-1 rounded-full bg-neutral-100 text-neutral-800 font-mono font-bold text-xs">
+                Buyurtma: #{lastOrderId}
+              </div>
+            )}
+            {telegramStatus && (
+              <p className="text-[11px] text-emerald-600 font-semibold mb-2">
+                {telegramStatus}
+              </p>
+            )}
+            <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
               Buyurtma ma‘lumotlari do‘konimizga yetib bordi. Tez orada operatorimiz siz bilan bog‘lanadi.
             </p>
             <div className="mt-6 flex flex-col gap-2">
@@ -1381,6 +1674,291 @@ function CategoriesContent() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. FOOTER VA ALOQA */}
+      <footer id="aloqa" className="bg-white border-t border-neutral-200/80 pt-12 pb-10 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div className="sm:col-span-2 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl overflow-hidden border border-neutral-200 bg-white p-1 flex items-center justify-center shadow-2xs">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/logo.png" alt="Xamsiya Market" className="w-full h-full object-contain" />
+                </div>
+                <span className="font-black text-xl tracking-tight text-neutral-950">
+                  Xamsiya <span className="font-light text-neutral-400">Market</span>
+                </span>
+              </div>
+              <p className="text-xs text-neutral-500 max-w-sm leading-relaxed">
+                Zamonaviy telefon aksessuarlari onlayn-do‘koni. Chexollar, zaryadlovchilar, kabellar va himoya oynalari kafolatlangan original sifatda.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-neutral-950 mb-3">
+                Kategoriyalar
+              </h4>
+              <ul className="space-y-2 text-xs text-neutral-500">
+                {CATEGORIES.slice(1, 7).map((cat) => (
+                  <li key={cat}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="hover:text-neutral-950 transition-colors text-left"
+                    >
+                      {cat}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-neutral-950 mb-3">
+                Aloqa
+              </h4>
+              <div className="space-y-2 text-xs text-neutral-600">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-neutral-400" />
+                  <a href="tel:+998200191809" className="hover:text-neutral-950 font-bold">
+                    +998 (20) 019-18-09
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Har kuni: 09:00 - 21:00</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Qashqadaryo viloyati, Yakkabog‘ tumani</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400 text-center sm:text-left">
+            <p>© 2025 Xamsiya Market. Barcha huquqlar himoyalangan.</p>
+            <p className="text-[11px]">Telegram Bot va Mijoz Kabineti bilan integratsiya qilingan.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* 4.5. ⚡ 1-BOSISHDA TEZKOR XARID MODAL OYNASI */}
+      {quickBuyProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl p-5 sm:p-7 shadow-2xl border border-neutral-100 relative max-h-[95vh] overflow-y-auto">
+            <button
+              onClick={() => setQuickBuyProduct(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-neutral-100 text-neutral-400 hover:text-neutral-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal sarlavhasi */}
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-bold mb-2">
+                <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                <span>1 Bosishda Tezkor Xarid</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-black text-neutral-950">
+                Tezkor Buyurtma Berish
+              </h3>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Raqamingizni qoldiring, 3 soniyada do‘kon egasiga buyurtma yetkaziladi!
+              </p>
+            </div>
+
+            {/* Mahsulot kartochkasi */}
+            <div className="p-3 rounded-2xl bg-neutral-50 border border-neutral-200/80 mb-4 flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={quickBuyProduct.image}
+                alt={quickBuyProduct.name}
+                className="w-16 h-16 rounded-xl object-cover bg-neutral-200 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                  {quickBuyProduct.category}
+                </span>
+                <h4 className="text-xs font-bold text-neutral-900 truncate">
+                  {quickBuyProduct.name}
+                </h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm font-black text-neutral-950">
+                    {formatPrice(quickBuyProduct.price)}
+                  </span>
+                  {quickBuyProduct.category === 'Chexol' && (
+                    <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
+                      + 9D Shisha Sovg‘a
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleQuickBuySubmit} className="space-y-3.5 text-xs sm:text-sm">
+              {/* Chexol bo'lsa: Model va Rang tanlash */}
+              {quickBuyProduct.category === 'Chexol' && (
+                <div className="p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-200/80 space-y-3">
+                  {/* Telefon modeli */}
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Smartphone className="w-3.5 h-3.5 text-neutral-500" />
+                        Telefon modelingiz:
+                      </span>
+                      <span className="text-[10px] font-bold text-rose-600">{quickModel || 'Tanlanmadi'}</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={quickModel}
+                      onChange={(e) => setQuickModel(e.target.value)}
+                      placeholder="Masalan: iPhone 14 Pro, Galaxy S23..."
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-neutral-200 text-xs font-semibold outline-none focus:border-neutral-950"
+                    />
+                    {/* Tezkor modellar */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pt-1.5 scrollbar-none">
+                      {['iPhone 15 Pro', 'iPhone 14', 'iPhone 13', 'Galaxy S24', 'Redmi Note 13'].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setQuickModel(m)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold shrink-0 border transition-all ${
+                            quickModel === m
+                              ? 'bg-neutral-950 text-white border-neutral-950'
+                              : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rang tanlash */}
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Palette className="w-3.5 h-3.5 text-neutral-500" />
+                        Chexol rangi:
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-900">{quickColor}</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {CASE_COLORS.map((color) => {
+                        const isSelected = quickColor === color.name;
+                        return (
+                          <button
+                            key={color.id}
+                            type="button"
+                            onClick={() => setQuickColor(color.name)}
+                            className={`p-1.5 rounded-xl border text-[11px] font-medium flex items-center gap-1.5 transition-all ${
+                              isSelected
+                                ? 'bg-white border-neutral-950 ring-2 ring-neutral-950/20 shadow-xs'
+                                : 'bg-white/60 border-neutral-200 hover:border-neutral-300'
+                            }`}
+                          >
+                            <span
+                              style={{ backgroundColor: color.hex }}
+                              className="w-3.5 h-3.5 rounded-full shrink-0 border border-neutral-300"
+                            />
+                            <span className="truncate">{color.name.split(' ')[0]}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ism */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  Ismingiz *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={quickName}
+                  onChange={(e) => setQuickName(e.target.value)}
+                  placeholder="Ismingizni kiriting"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-neutral-950 outline-none text-xs sm:text-sm transition-all"
+                />
+              </div>
+
+              {/* Telefon */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  Telefon raqamingiz *
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-xs sm:text-sm font-semibold text-neutral-500">
+                    +998
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    inputMode="numeric"
+                    value={quickPhone}
+                    onChange={(e) => setQuickPhone(e.target.value)}
+                    placeholder="90 123 45 67"
+                    className="w-full pl-14 pr-3.5 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-neutral-950 outline-none text-xs sm:text-sm font-mono transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Manzil */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  Yetkazib berish manzili
+                </label>
+                <input
+                  type="text"
+                  value={quickAddress}
+                  onChange={(e) => setQuickAddress(e.target.value)}
+                  placeholder="Yakkabog‘ tumani, ko‘cha yoki do‘kondan olib ketish"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-neutral-950 outline-none text-xs sm:text-sm transition-all"
+                />
+              </div>
+
+              {/* Afzalliklar / Ishonch belgilari */}
+              <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 space-y-1">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <Truck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>Yakkabog‘ bo‘ylab yetkazib berish <b>bepul</b></span>
+                </div>
+                <div className="flex items-center gap-1.5 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>To‘lov faqat mahsulotni ko‘rib olgandan so‘ng!</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isQuickSubmitting}
+                  className="w-full py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60 active:scale-95"
+                >
+                  {isQuickSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Buyurtma qabul qilinmoqda...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 fill-white" />
+                      <span>Buyurtmani Tasdiqlash (3 soniyada)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

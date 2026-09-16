@@ -325,7 +325,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 7,
     name: 'MagSafe 15W Avtomobil Telefon Tutqichi (Holder)',
-    category: 'Chexol',
+    category: 'Zaryadlovchi',
     price: 185000,
     oldPrice: 220000,
     image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?auto=format&fit=crop&w=600&q=80',

@@ -14,7 +14,8 @@ import {
   LogOut,
   Search,
   Eye,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 interface CartItem {
@@ -76,6 +77,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchOrder, setSearchOrder] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Yangi mahsulot state-lari
   const [name, setName] = useState('');
@@ -85,7 +87,24 @@ export default function AdminPage() {
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
 
-  // LocalStorage-dan ma'lumotlarni yuklash
+  // Serverdan buyurtmalarni yuklash
+  const fetchOrdersFromServer = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        setOrders(data.orders);
+        localStorage.setItem('xamsiya_orders', JSON.stringify(data.orders));
+      }
+    } catch (err) {
+      console.error('Admin fetch orders error:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // LocalStorage-dan ma'lumotlarni yuklash va server bilan sinxronlash
   useEffect(() => {
     // Avval tizimga kirganmi tekshirish
     const sessionAuth = sessionStorage.getItem('xamsiya_admin_auth');
@@ -108,6 +127,15 @@ export default function AdminPage() {
     }
   }, []);
 
+  // Tizimga kirganda avtomatik serverdan yangilash va 8 soniyalik jonli monitoring
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrdersFromServer();
+      const interval = setInterval(fetchOrdersFromServer, 8000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
   // Xavfsiz PIN tekshiruvi
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,11 +154,21 @@ export default function AdminPage() {
     sessionStorage.removeItem('xamsiya_admin_auth');
   };
 
-  // Buyurtma holatini o'zgartirish
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
+  // Buyurtma holatini o'zgartirish (ham lokal, ham server bazasida sinxron)
+  const updateOrderStatus = async (orderId: string, status: Order['status']) => {
     const updated = orders.map((o) => (o.id === orderId ? { ...o, status } : o));
     setOrders(updated);
     localStorage.setItem('xamsiya_orders', JSON.stringify(updated));
+
+    try {
+      await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: orderId, status })
+      });
+    } catch (err) {
+      console.error('Failed to update status on server:', err);
+    }
   };
 
   // Mahsulotni o'chirish
@@ -363,15 +401,26 @@ export default function AdminPage() {
         {/* TAB 1: BUYURTMALAR */}
         {activeTab === 'orders' && (
           <div className="space-y-4">
-            <div className="relative max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
-              <input
-                type="text"
-                value={searchOrder}
-                onChange={(e) => setSearchOrder(e.target.value)}
-                placeholder="Buyurtma ID, ism yoki telefon bo‘yicha qidiring..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200 rounded-2xl text-xs sm:text-sm outline-none focus:border-neutral-900"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
+                <input
+                  type="text"
+                  value={searchOrder}
+                  onChange={(e) => setSearchOrder(e.target.value)}
+                  placeholder="Buyurtma ID, ism yoki telefon bo‘yicha qidiring..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200 rounded-2xl text-xs sm:text-sm outline-none focus:border-neutral-900"
+                />
+              </div>
+              <button
+                onClick={fetchOrdersFromServer}
+                disabled={isRefreshing}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white border border-neutral-200 hover:border-neutral-950 text-xs font-bold text-neutral-700 hover:text-neutral-950 transition-all shadow-xs shrink-0"
+                title="Serverdan buyurtmalarni yangilash"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-neutral-950' : ''}`} />
+                <span className="hidden sm:inline">Yangilash</span>
+              </button>
             </div>
 
             {filteredOrders.length === 0 ? (

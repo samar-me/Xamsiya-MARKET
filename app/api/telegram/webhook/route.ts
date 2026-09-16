@@ -32,6 +32,15 @@ export async function POST(req: Request) {
 
         // Telegram xabarini tahrirlash (yangi status bilan)
         if (message && updatedOrder) {
+          const escapeHtml = (str?: string): string => {
+            if (!str) return '';
+            return String(str)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+          };
+
           const statusIcon =
             newStatus === 'Yetkazilmoqda'
               ? '🚚 Yetkazilmoqda (Kuryerda)'
@@ -44,9 +53,9 @@ export async function POST(req: Request) {
           let updatedText = message.text || '';
           // Agar xabarda status bo'lsa yangilaymiz
           if (updatedText.includes('📌 Status:')) {
-            updatedText = updatedText.replace(/📌 Status: .*/, `📌 Status: <b>${statusIcon}</b>`);
+            updatedText = escapeHtml(updatedText).replace(/📌 Status: .*/, `📌 Status: <b>${statusIcon}</b>`);
           } else {
-            updatedText += `\n\n📌 Status: <b>${statusIcon}</b> (O‘zgartirdi: ${from?.first_name || 'Admin'})`;
+            updatedText = escapeHtml(updatedText) + `\n\n📌 Status: <b>${statusIcon}</b> (O‘zgartirdi: ${escapeHtml(from?.first_name || 'Admin')})`;
           }
 
           // Yangi tugmalar
@@ -71,17 +80,21 @@ export async function POST(req: Request) {
             ]
           };
 
-          await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: message.chat.id,
-              message_id: message.message_id,
-              text: updatedText,
-              parse_mode: 'HTML',
-              reply_markup: newKeyboard
-            })
-          });
+          try {
+            await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: message.chat.id,
+                message_id: message.message_id,
+                text: updatedText,
+                parse_mode: 'HTML',
+                reply_markup: newKeyboard
+              })
+            });
+          } catch (editErr) {
+            console.error('editMessageText error:', editErr);
+          }
         }
       }
 
